@@ -1,151 +1,197 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard{% endblock %}
-{% block content %}
 
+{% block content %}
 <div class="container-fluid mt-4">
 
-    <div class="d-flex justify-content-end mb-3">
-        <input type="text" class="form-control w-50" placeholder="Search product, supplier, order">
+  <!-- ✅ شريط البحث -->
+  <div class="d-flex justify-content-end mb-3">
+    <input type="text" class="form-control w-50" placeholder="Search product, supplier, order">
+  </div>
+
+  <!-- ✅ الأقسام العلوية -->
+  <div class="row g-3 mb-4">
+
+    <!-- ✅ Sales Overview Cards -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <h6 class="mb-3 text-muted">Sales Overview</h6>
+        <div class="row">
+          {% for card in cards %}
+          <div class="col-sm-6 col-md-3 mb-3">
+            <div class="d-flex align-items-center">
+              <div class="me-3 bg-light rounded-circle p-3 text-{{ card.color }}">
+                <i class="bi {{ card.icon }} fs-4"></i>
+              </div>
+              <div>
+                <small class="text-muted">{{ card.label }}</small>
+                <div class="fw-bold">${{ card.value|default:"0" }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
 
-    <div class="row g-3 mb-4">
+    <!-- ✅ Inventory Summary -->
+    <div class="col-lg-3">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <h6 class="mb-2 text-muted">Inventory Summary</h6>
+        <p class="mb-1">Quantity in Hand: <strong>{{ total_products|default:"0" }}</strong></p>
+        <p>To be Received: <strong>{{ to_be_received|default:"0" }}</strong></p>
+      </div>
+    </div>
+  </div>
 
-        <div class="col-lg-9">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h6 class="mb-3 text-muted">Sales Overview</h6>
-                <div class="row">
-                    {% for card in cards %}
-                    <div class="col-sm-6 col-md-3 mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3 bg-light rounded-circle p-3 text-{{ card.color }}">
-                                <i class="bi {{ card.icon }} fs-4"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted">{{ card.label }}</small>
-                                <div class="fw-bold">${{ card.value|default:"0" }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+  <!-- ✅ Purchase & Product Summary -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <h6 class="mb-3 text-muted">Purchase Overview</h6>
+        <div class="d-flex justify-content-between">
+          <div>
+            <p>Purchase: <strong>{{ total_purchases|default:"0" }}</strong></p>
+            <p>Cost: <strong>${{ total_cost|default:"0" }}</strong></p>
+          </div>
+          <div>
+            <p>Cancel: <strong>{{ canceled_orders|default:"0" }}</strong></p>
+            <p>Return: <strong>{{ returns|default:"0" }}</strong></p>
+          </div>
         </div>
-
-        <div class="col-lg-3">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h6 class="mb-2 text-muted">Inventory Summary</h6>
-                <p class="mb-1">Quantity in Hand: <strong>{{ total_products|default:"0" }}</strong></p>
-                <p>To be Received: <strong>{{ to_be_received|default:"0" }}</strong></p>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <div class="row g-3 mb-4">
-
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h6 class="mb-3 text-muted">Purchase Overview</h6>
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p>Purchase: <strong>{{ total_purchases|default:"0" }}</strong></p>
-                        <p>Cost: <strong>${{ total_cost|default:"0" }}</strong></p>
-                    </div>
-                    <div>
-                        <p>Cancel: <strong>{{ canceled_orders|default:"0" }}</strong></p>
-                        <p>Return: <strong>{{ returns|default:"0" }}</strong></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 p-3 h-100">
-                <h6 class="mb-3 text-muted">Product Summary</h6>
-                <p>Suppliers: <strong>{{ total_suppliers|default:"0" }}</strong></p>
-                <p>Categories: <strong>{{ total_categories|default:"0" }}</strong></p>
-            </div>
-        </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 p-3 h-100">
+        <h6 class="mb-3 text-muted">Product Summary</h6>
+        <p>Suppliers: <strong>{{ total_suppliers|default:"0" }}</strong></p>
+        <p>Categories: <strong>{{ total_categories|default:"0" }}</strong></p>
+      </div>
     </div>
+  </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-6">
-            <div class="card p-3 shadow-sm border-0 h-100">
-                <h6 class="mb-3">Sales & Purchases</h6>
-                <canvas id="salesChart" height="150"></canvas>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card p-3 shadow-sm border-0 h-100">
-                <h6 class="mb-3">Order Summary</h6>
-                <canvas id="ordersChart" height="150"></canvas>
-            </div>
-        </div>
+  <!-- ✅ الرسوم البيانية -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card p-3 shadow-sm border-0 h-100">
+        <h6 class="mb-3">Sales & Purchases</h6>
+        <canvas id="salesChart" height="150"></canvas>
+      </div>
     </div>
+    <div class="col-md-6">
+      <div class="card p-3 shadow-sm border-0 h-100">
+        <h6 class="mb-3">Order Summary</h6>
+        <canvas id="ordersChart" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ جدول المنتجات مثل Invetra -->
+  <div class="card shadow-sm border-0 p-3 mb-5">
+    <h6 class="mb-3 text-muted">Product Inventory</h6>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Product</th>
+            <th>Buying Price</th>
+            <th>Quantity</th>
+            <th>Threshold</th>
+            <th>Expiry Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>${{ product.buying_price }}</td>
+            <td>{{ product.quantity }}</td>
+            <td>{{ product.threshold }}</td>
+            <td>{{ product.expiry_date }}</td>
+            <td>
+              {% if product.quantity == 0 %}
+                <span class="text-danger">Out of stock</span>
+              {% elif product.quantity <= product.threshold %}
+                <span class="text-warning">Low stock</span>
+              {% else %}
+                <span class="text-success">In stock</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
+<!-- ✅ Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const salesChart = new Chart(document.getElementById('salesChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ labels|safe }},
-            datasets: [
-                {
-                    label: 'Sales',
-                    data: {{ sales_data|safe }},
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
-                },
-                {
-                    label: 'Purchases',
-                    data: {{ purchases_data|safe }},
-                    backgroundColor: 'rgba(255, 206, 86, 0.7)'
-                }
-            ]
+  const salesChart = new Chart(document.getElementById('salesChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ labels|safe }},
+      datasets: [
+        {
+          label: 'Sales',
+          data: {{ sales_data|safe }},
+          backgroundColor: 'rgba(54, 162, 235, 0.7)'
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+        {
+          label: 'Purchases',
+          data: {{ purchases_data|safe }},
+          backgroundColor: 'rgba(255, 206, 86, 0.7)'
         }
-    });
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
 
-    const ordersChart = new Chart(document.getElementById('ordersChart'), {
-        type: 'line',
-        data: {
-            labels: {{ order_labels|safe }},
-            datasets: [
-                {
-                    label: 'Ordered',
-                    data: {{ ordered_data|safe }},
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    fill: false,
-                    tension: 0.3
-                },
-                {
-                    label: 'Delivered',
-                    data: {{ delivered_data|safe }},
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    fill: false,
-                    tension: 0.3
-                }
-            ]
+  const ordersChart = new Chart(document.getElementById('ordersChart'), {
+    type: 'line',
+    data: {
+      labels: {{ order_labels|safe }},
+      datasets: [
+        {
+          label: 'Ordered',
+          data: {{ ordered_data|safe }},
+          borderColor: 'rgba(75, 192, 192, 1)',
+          fill: false,
+          tension: 0.3
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+        {
+          label: 'Delivered',
+          data: {{ delivered_data|safe }},
+          borderColor: 'rgba(153, 102, 255, 1)',
+          fill: false,
+          tension: 0.3
         }
-    });
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
 </script>
 
 {% endblock %}

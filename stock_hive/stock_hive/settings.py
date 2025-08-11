@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'suppliers',
     'reports',
     'notifications',
-    'inventory',
+    'inventory.apps.InventoryConfig', 
     'crispy_forms',
     'crispy_bootstrap5',
 ]
@@ -67,6 +67,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -130,7 +131,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
+USE_I18N = True
+LANGUAGES = [
+    ("en", "English"),
+    ("ar", "العربية"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"] 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -147,3 +153,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'dashboard:index'
+LOGOUT_REDIRECT_URL = 'home'   

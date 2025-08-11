@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}المنتجات{% else %}Products{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">{% if LANGUAGE_CODE == 'ar' %}المنتجات{% else %}Products{% endif %}</h5>
+
+    {% if perms.products.add_product %}
+      <a class="btn btn-primary" href="{% url 'products:create' %}">
+        {% if LANGUAGE_CODE == 'ar' %}إضافة منتج{% else %}Add Product{% endif %}
+      </a>
+    {% endif %}
+  </div>
+
+  <form class="row g-2 mb-3">
+    <div class="col-sm-4">
+      <input name="q" value="{{ q }}" class="form-control"
+             placeholder="{% if LANGUAGE_CODE == 'ar' %}ابحث بالاسم/الباركود/العلامة{% else %}Search by name/sku/barcode/brand{% endif %}">
+    </div>
+    <div class="col-sm-3">
+      <select name="cat" class="form-select">
+        <option value="">{% if LANGUAGE_CODE == 'ar' %}كل التصنيفات{% else %}All categories{% endif %}</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}" {% if cat|default:'' == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-3">
+      <select name="status" class="form-select">
+        <option value="">{% if LANGUAGE_CODE == 'ar' %}كل الحالات{% else %}All statuses{% endif %}</option>
+        <option value="low" {% if status == 'low' %}selected{% endif %}>
+          {% if LANGUAGE_CODE == 'ar' %}منخفض المخزون{% else %}Low stock{% endif %}
+        </option>
+      </select>
+    </div>
+    <div class="col-sm-2">
+      <button class="btn btn-outline-secondary w-100">
+        {% if LANGUAGE_CODE == 'ar' %}تصفية{% else %}Filter{% endif %}
+      </button>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>{% if LANGUAGE_CODE == 'ar' %}المنتج{% else %}Product{% endif %}</th>
+            <th>SKU</th>
+            <th>{% if LANGUAGE_CODE == 'ar' %}النوع{% else %}Type{% endif %}</th>
+            <th>{% if LANGUAGE_CODE == 'ar' %}السعر{% else %}Price{% endif %}</th>
+            <th>{% if LANGUAGE_CODE == 'ar' %}الكمية{% else %}Qty{% endif %}</th>
+            <th>{% if LANGUAGE_CODE == 'ar' %}حد إعادة الطلب{% else %}Reorder{% endif %}</th>
+            <th>{% if LANGUAGE_CODE == 'ar' %}الحالة{% else %}Status{% endif %}</th>
+            <th style="width:220px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              <div class="fw-semibold">{{ p.name }}</div>
+              <small class="text-muted">{{ p.brand|default:"" }}</small>
+            </td>
+            <td>{{ p.sku|default:"-" }}</td>
+            <td>{{ p.product_type|default:"-" }}</td>
+            <td>{% if p.price %}${{ p.price }}{% else %}-{% endif %}</td>
+            <td>{{ p.quantity|default:0 }}</td>
+            <td>{{ p.reorder_level|default:0 }}</td>
+            <td>
+              {% if p.quantity|default:0 == 0 %}
+                <span class="badge text-bg-danger">
+                  {% if LANGUAGE_CODE == 'ar' %}غير متوفر{% else %}Out{% endif %}
+                </span>
+              {% elif p.quantity|default:0 <= p.reorder_level|default:0 %}
+                <span class="badge text-bg-warning">
+                  {% if LANGUAGE_CODE == 'ar' %}منخفض{% else %}Low{% endif %}
+                </span>
+              {% else %}
+                <span class="badge text-bg-success">
+                  {% if LANGUAGE_CODE == 'ar' %}متوفر{% else %}In{% endif %}
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-nowrap">
+              {% if perms.products.change_product %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'products:update' p.pk %}">
+                  {% if LANGUAGE_CODE == 'ar' %}تعديل{% else %}Edit{% endif %}
+                </a>
+              {% endif %}
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'products:movements' p.pk %}">
+                {% if LANGUAGE_CODE == 'ar' %}الحركات{% else %}Moves{% endif %}
+              </a>
+              {% if perms.products.delete_product %}
+                <form method="post" action="{% url 'products:delete' p.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" onclick="return confirm('{% if LANGUAGE_CODE == 'ar' %}حذف المنتج؟{% else %}Delete this product?{% endif %}')">
+                    {% if LANGUAGE_CODE == 'ar' %}حذف{% else %}Delete{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center text-muted py-4">
+              {% if LANGUAGE_CODE == 'ar' %}لا توجد منتجات.{% else %}No products.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-3">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&cat={{ cat }}&status={{ status }}">«</a>
+          </li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&cat={{ cat }}&status={{ status }}">»</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

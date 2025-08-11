@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}ستوك هايف — نظام إدارة مخزون{% else %}Stock Hive — Inventory Management{% endif %}{% endblock %}
+{% block page_title %}{% endblock %}
+
+{% block content %}
+<style>
+  .sidebar, .side-nav, [data-role="sidebar"] { display: none !important; } 
+  .main-content { margin-left:0 !important; width:100% !important; }
+  :root { --brand:#1e66ff; --ink:#0f172a; --muted:#64748b; }
+  .hero{background:radial-gradient(1200px 500px at 80% 10%, rgba(14,165,233,.20), transparent 60%),
+                 linear-gradient(135deg, rgba(14,165,233,.08), rgba(139,92,246,.10));
+        border-radius:18px; padding:clamp(32px,4vw,48px);}
+  .pill{display:inline-block;padding:6px 12px;border-radius:999px;font-size:.85rem;background:#eaf7ff;color:#0ea5e9;border:1px solid rgba(14,165,233,.25)}
+  .hero h1{font-weight:800;line-height:1.2;font-size:clamp(28px,4vw,44px)}
+  .hero p{color:var(--muted);font-size:1.05rem}
+  .feat-card{border:0;border-radius:14px;box-shadow:0 6px 24px rgba(2,8,20,.06)}
+  .feat-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:#f1f5f9;font-size:20px}
+  .img-mock{border-radius:14px;box-shadow:0 18px 60px rgba(2,8,20,.18);border:1px solid rgba(2,8,20,.06)}
+</style>
+
+<div class="container py-5" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+  <div class="hero mb-5">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <span class="pill mb-3">{% if LANGUAGE_CODE == 'ar' %}الدقة أولًا{% else %}Precision{% endif %}</span>
+        <h1 class="mb-3">
+          {% if LANGUAGE_CODE == 'ar' %}
+            أدر مخزونك بثقة — تجنّب نقص الكميات وقراراتك مبنية على بيانات.
+          {% else %}
+            Manage your inventory with confidence — prevent stock-outs and make data-driven decisions.
+          {% endif %}
+        </h1>
+        <p class="mb-4">
+          {% if LANGUAGE_CODE == 'ar' %}
+            ستوك هايف نظام إدارة مخزون مبني بـ Django لإدارة المنتجات والموردين والكميات،
+            مع تنبيهات انخفاض المخزون وتقارير فورية وتصدير CSV. صلاحيات منفصلة للمدير والموظف.
+          {% else %}
+            Stock Hive is a Django-based inventory system to manage products, suppliers, and quantities
+            with low-stock alerts, instant reports, and CSV export. Separate roles for admin and employees.
+          {% endif %}
+        </p>
+
+        <div class="d-flex gap-2 flex-wrap">
+          {% if request.user.is_authenticated %}
+            <a href="{% url 'dashboard:index' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-speedometer2 {% if LANGUAGE_CODE == 'ar' %}ms-1{% else %}me-1{% endif %}"></i>
+              {% if LANGUAGE_CODE == 'ar' %}لوحة التحكم{% else %}Go to Dashboard{% endif %}
+            </a>
+          {% else %}
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+              <i class="bi bi-box-arrow-in-right {% if LANGUAGE_CODE == 'ar' %}ms-1{% else %}me-1{% endif %}"></i>
+              {% if LANGUAGE_CODE == 'ar' %}تسجيل الدخول{% else %}Login{% endif %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <img class="img-fluid img-mock" alt="Stock Hive dashboard preview"
+             src="https://images.unsplash.com/photo-1551281044-8af2bce36aa0?q=80&w=1280&auto=format&fit=crop">
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-4">
+      <div class="card feat-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="feat-icon"><i class="bi bi-box-seam"></i></div>
+          <div>
+            <h5 class="mb-1">{% if LANGUAGE_CODE == 'ar' %}كل شيء في مكان واحد{% else %}All-in-one{% endif %}</h5>
+            <p class="mb-0 text-muted">
+              {% if LANGUAGE_CODE == 'ar' %}إدارة المنتجات، التصنيفات، والمورّدين بعلاقات واضحة وسهلة.{% else %}
+              Manage products, categories, and suppliers with clear relations.{% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card feat-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="feat-icon"><i class="bi bi-arrow-left-right"></i></div>
+          <div>
+            <h5 class="mb-1">{% if LANGUAGE_CODE == 'ar' %}حركات IN/OUT فورية{% else %}Instant IN/OUT{% endif %}</h5>
+            <p class="mb-0 text-muted">
+              {% if LANGUAGE_CODE == 'ar' %}تحديث الكميات تلقائيًا مع سجلّ حركات شفاف.{% else %}
+              Auto-update quantities with a clear movement log.{% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card feat-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="feat-icon"><i class="bi bi-bell"></i></div>
+          <div>
+            <h5 class="mb-1">{% if LANGUAGE_CODE == 'ar' %}تنبيهات ذكية{% else %}Smart alerts{% endif %}</h5>
+            <p class="mb-0 text-muted">
+              {% if LANGUAGE_CODE == 'ar' %}إنذارات انخفاض المخزون وقرب انتهاء الصلاحية.{% else %}
+              Low-stock and expiry notifications.{% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card feat-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="feat-icon"><i class="bi bi-graph-up"></i></div>
+          <div>
+            <h5 class="mb-1">{% if LANGUAGE_CODE == 'ar' %}تقارير ومؤشرات{% else %}Reports & KPIs{% endif %}</h5>
+            <p class="mb-0 text-muted">
+              {% if LANGUAGE_CODE == 'ar' %}مبيعات/تكلفة/ربح وCSV للتصدير.{% else %}
+              Sales/Cost/Profit with CSV export.{% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card feat-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="feat-icon"><i class="bi bi-shield-check"></i></div>
+          <div>
+            <h5 class="mb-1">{% if LANGUAGE_CODE == 'ar' %}صلاحيات واضحة{% else %}Clear permissions{% endif %}</h5>
+            <p class="mb-0 text-muted">
+              {% if LANGUAGE_CODE == 'ar' %}موظّف (بدون حذف) ومدير بكامل الصلاحيات.{% else %}
+              Employee (no delete) and full-access admin.{% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card feat-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="feat-icon"><i class="bi bi-lightning-charge"></i></div>
+          <div>
+            <h5 class="mb-1">{% if LANGUAGE_CODE == 'ar' %}أداء واستقرار{% else %}Performance{% endif %}</h5>
+            <p class="mb-0 text-muted">
+              {% if LANGUAGE_CODE == 'ar' %}مبني على Django 5 — سريع وآمن.{% else %}
+              Built on Django 5 — fast & secure.{% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

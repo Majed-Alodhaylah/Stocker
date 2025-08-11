@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}Delete Product{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:560px;">
+  <div class="card border-0 shadow-sm p-4">
+    <h5 class="mb-3">{% if LANGUAGE_CODE == 'ar' %}حذف منتج{% else %}Delete Product{% endif %}</h5>
+    <p class="mb-4">
+      {% if LANGUAGE_CODE == 'ar' %}
+        هل أنت متأكد أنك تريد حذف <strong>{{ product.name }}</strong>؟
+      {% else %}
+        Are you sure you want to delete <strong>{{ product.name }}</strong>?
+      {% endif %}
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn btn-danger me-2" type="submit">
+        {% if LANGUAGE_CODE == 'ar' %}حذف{% else %}Delete{% endif %}
+      </button>
+      <a class="btn btn-secondary" href="{% url 'products:list' %}">
+        {% if LANGUAGE_CODE == 'ar' %}إلغاء{% else %}Cancel{% endif %}
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

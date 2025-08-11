@@ -1,13 +1,59 @@
-{% extends 'base.html' %}
-{% block title %}Register{% endblock %}
+{% extends "base.html" %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}إنشاء حساب{% else %}Create Account{% endif %}{% endblock %}
+
 {% block content %}
-<div class="container mt-5" style="max-width: 400px;">
-    <h2 class="mb-4 text-center">Create Account</h2>
-    <form method="post">
+<div class="container" style="max-width: 520px;">
+  <div class="card shadow-sm border-0 mt-5">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center mb-3">
+        <i class="bi bi-box-seam fs-4 me-2 brand-icon"></i>
+        <h4 class="m-0">{% if LANGUAGE_CODE == 'ar' %}إنشاء حساب{% else %}Create Account{% endif %}</h4>
+      </div>
+
+      <form method="post" novalidate>
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-success w-100">Register</button>
-    </form>
-    <p class="text-center mt-3">Already have an account? <a href="{% url 'accounts:login' %}">Login</a></p>
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+          <label class="form-label">{% if LANGUAGE_CODE == 'ar' %}اسم المستخدم{% else %}Username{% endif %}</label>
+          {{ form.username }} {{ form.username.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">{% if LANGUAGE_CODE == 'ar' %}كلمة المرور{% else %}Password{% endif %}</label>
+          {{ form.password1 }} {{ form.password1.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">{% if LANGUAGE_CODE == 'ar' %}تأكيد كلمة المرور{% else %}Confirm password{% endif %}</label>
+          {{ form.password2 }} {{ form.password2.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">{% if LANGUAGE_CODE == 'ar' %}الدور{% else %}Role{% endif %}</label>
+          <div class="d-flex gap-3">
+            {% for opt in form.role %}
+              <label class="form-check">
+                {{ opt.tag }} <span class="ms-1">{{ opt.choice_label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          {{ form.role.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">
+          {% if LANGUAGE_CODE == 'ar' %}تسجيل{% else %}Register{% endif %}
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{% url 'accounts:login' %}" class="text-decoration-none">
+          {% if LANGUAGE_CODE == 'ar' %}لديك حساب؟ سجّل الدخول{% else %}Already have an account? Login{% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

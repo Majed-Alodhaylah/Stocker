@@ -22,7 +22,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # local
     "accounts",
     "dashboard",
     "products",
@@ -87,6 +86,11 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+BASE_DIR / 'static',
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [ BASE_DIR / 'static' ]
+
+
 ADMIN_SIGNUP_CODE = os.getenv("ADMIN_SIGNUP_CODE", "SH-ADMIN-2025")
 
 

@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "Delete category" %}{% endblock %}
+{% block content %}
+<div class="card shadow-sm p-3">
+  <p class="mb-3">{% blocktrans with name=obj.name %}Are you sure you want to delete "{{ name }}"?{% endblocktrans %}</p>
+  <form method="post">{% csrf_token %}
+    <button class="btn btn-danger">{% trans "Delete" %}</button>
+    <a class="btn btn-light" href="{% url 'categories:list' %}">{% trans "Cancel" %}</a>
+  </form>
+</div>
+{% endblock %}

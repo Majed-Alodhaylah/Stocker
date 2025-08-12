@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{{ supplier.name }}{% endblock %}
+{% block page_title %}
+  <h4 class="mb-0">{{ supplier.name }}</h4>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card p-3 shadow-sm border-0 h-100">
+        {% if supplier.logo %}
+          <img src="{{ supplier.logo.url }}" alt="{{ supplier.name }}" class="img-fluid rounded mb-3">
+        {% endif %}
+        <p class="mb-1"><strong>Email:</strong> {{ supplier.email|default:"—" }}</p>
+        <p class="mb-1"><strong>{% if LANGUAGE_CODE == 'ar' %}الموقع{% else %}Website{% endif %}:</strong>
+          {% if supplier.website %}<a href="{{ supplier.website }}" target="_blank" rel="noopener"> {{ supplier.website }}</a>{% else %}—{% endif %}
+        </p>
+        <p class="mb-0"><strong>{% if LANGUAGE_CODE == 'ar' %}الهاتف{% else %}Phone{% endif %}:</strong> {{ supplier.phone|default:"—" }}</p>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card p-3 shadow-sm border-0">
+        <h6 class="mb-3">{% if LANGUAGE_CODE == 'ar' %}منتجات المورد{% else %}Supplier Products{% endif %}</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>{% if LANGUAGE_CODE == 'ar' %}المنتج{% else %}Product{% endif %}</th>
+                <th>{% if LANGUAGE_CODE == 'ar' %}الفئة{% else %}Category{% endif %}</th>
+                <th>{% if LANGUAGE_CODE == 'ar' %}الكمية{% else %}Qty{% endif %}</th>
+                <th>{% if LANGUAGE_CODE == 'ar' %}الحالة{% else %}Status{% endif %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in products %}
+              <tr>
+                <td>{{ p.name }}</td>
+                <td>{{ p.category.name }}</td>
+                <td>{{ p.quantity }}</td>
+                <td>
+                  {% if p.quantity == 0 %}
+                    <span class="text-danger">{% if LANGUAGE_CODE == 'ar' %}غير متوفر{% else %}Out{% endif %}</span>
+                  {% elif p.quantity <= p.reorder_level %}
+                    <span class="text-warning">{% if LANGUAGE_CODE == 'ar' %}منخفض{% else %}Low{% endif %}</span>
+                  {% else %}
+                    <span class="text-success">{% if LANGUAGE_CODE == 'ar' %}متوفر{% else %}In stock{% endif %}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'products:detail' p.pk %}">{% if LANGUAGE_CODE == 'ar' %}تفاصيل{% else %}View{% endif %}</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  {% if LANGUAGE_CODE == 'ar' %}لا توجد منتجات لهذا المورد.{% else %}No products for this supplier.{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

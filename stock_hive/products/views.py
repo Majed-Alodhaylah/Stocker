@@ -1,153 +1,147 @@
-from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-from django.db import transaction
-from django.db.models import Q, Sum, F
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Q, F
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
+
+from .forms import ProductForm, StockAdjustForm
 from .models import Product
-from .forms import ProductForm, MovementForm
 from inventory.models import StockMovement
 
-try:
-    from categories.models import Category
-except Exception:
-    Category = None
+
+def _can_delete_products(user):
+    return user.is_staff
 
 
 @login_required
 def product_list(request):
-    q     = request.GET.get('q', '').strip()
-    cat   = request.GET.get('cat', '').strip()
-    ptype = request.GET.get('type', '').strip()
-    stat  = request.GET.get('status', '').strip()
+    q = request.GET.get("q", "").strip()
+    order = request.GET.get("order", "name")  
 
-    qs = Product.objects.all().select_related('category')
+    qs = (
+        Product.objects
+        .select_related("category")
+        .prefetch_related("suppliers")
+        .annotate(buying_price=F("price"))
+    )
 
     if q:
         qs = qs.filter(
             Q(name__icontains=q) |
-            Q(sku__icontains=q) |
-            Q(barcode__icontains=q) |
-            Q(brand__icontains=q)
-        )
-    if cat:
-        qs = qs.filter(category_id=cat)
-    if ptype:
-        qs = qs.filter(product_type=ptype)
-    if stat == "low":
-        qs = qs.filter(quantity__lte=F('reorder_level'))
+            Q(description__icontains=q) |
+            Q(category__name__icontains=q) |
+            Q(suppliers__name__icontains=q)
+        ).distinct()
 
-    qs = qs.order_by('name')
-
-    paginator = Paginator(qs, 15)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'products': page_obj,
-        'page_obj': page_obj,
-        'q': q, 'cat': cat, 'ptype': ptype, 'status': stat,
-        'categories': (Category.objects.all() if Category else []),
+    ordering_map = {
+        "name": "name",
+        "-name": "-name",
+        "qty": "quantity",
+        "-qty": "-quantity",
+        "new": "-id",
+        "old": "id",
     }
-    return render(request, 'list.html', context)
+    qs = qs.order_by(ordering_map.get(order, "name"))
+
+    paginator = Paginator(qs, 12)
+    items = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "products/list.html", {"items": items, "q": q, "order": order})
 
 
 @login_required
-@permission_required("products.add_product", raise_exception=True)   
-def product_create(request):
-    if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Product created.")
-            return redirect('products:list')
-    else:
-        form = ProductForm()
-    return render(request, 'form.html', {'form': form, 'is_create': True})
-
-
-@login_required
-@permission_required("products.change_product", raise_exception=True)  
-def product_update(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES, instance=product)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Product updated.")
-            return redirect('products:list')
-    else:
-        form = ProductForm(instance=product)
-    return render(request, 'form.html', {'form': form, 'product': product, 'is_create': False})
-
-
-@login_required
-@permission_required("products.delete_product", raise_exception=True)  
-def product_delete(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    if request.method == 'POST':
-        product.delete()
-        messages.success(request, "Product deleted.")
-        return redirect('products:list')
-    return render(request, 'confirm_delete.html', {'product': product})
-
-
-@login_required
-def product_movements(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    moves = StockMovement.objects.filter(product=product).order_by('-created_at')
-    totals = moves.aggregate(
-        total_in=Sum('quantity', filter=Q(kind='IN')),
-        total_out=Sum('quantity', filter=Q(kind='OUT')),
+def product_detail(request, pk):
+    obj = get_object_or_404(
+        Product.objects.select_related("category").prefetch_related("suppliers"),
+        pk=pk,
     )
-    return render(request, 'movements.html', {'product': product, 'moves': moves, 'totals': totals})
+    return render(request, "products/detail.html", {"object": obj, "obj": obj})
 
 
 @login_required
-@permission_required("inventory.add_stockmovement", raise_exception=True)  
-def stock_in(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    if request.method == 'POST':
-        form = MovementForm(request.POST)
-        if form.is_valid():
-            with transaction.atomic():
-                mv = form.save(commit=False)
-                mv.product = product
-                mv.kind = 'IN'
-                mv.created_by = request.user  
-                mv.save()
-                product.quantity = (product.quantity or 0) + mv.quantity
-                product.save(update_fields=['quantity'])
-            messages.success(request, "Stock IN recorded.")
-            return redirect('products:movements', pk=product.pk)
-    else:
-        form = MovementForm()
-    return render(request, 'stock_in.html', {'product': product, 'form': form})
+def product_create(request):
+    form = ProductForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        obj = form.save()
+        messages.success(request, _("Product created."))
+        return redirect("products:detail", pk=obj.pk)
+    return render(request, "products/form.html", {"form": form, "title": _("Create Product")})
 
 
 @login_required
-@permission_required("inventory.add_stockmovement", raise_exception=True) 
-def stock_out(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    if request.method == 'POST':
-        form = MovementForm(request.POST)
-        if form.is_valid():
-            mv_qty = form.cleaned_data.get('quantity')
-            if mv_qty is None or mv_qty <= 0:
-                form.add_error('quantity', "Invalid quantity.")
-            elif (product.quantity or 0) < mv_qty:
-                form.add_error('quantity', "Not enough stock.")
-            else:
-                with transaction.atomic():
-                    mv = form.save(commit=False)
-                    mv.product = product
-                    mv.kind = 'OUT'
-                    mv.created_by = request.user  
-                    mv.save()
-                    product.quantity = (product.quantity or 0) - mv_qty
-                    product.save(update_fields=['quantity'])
-                messages.success(request, "Stock OUT recorded.")
-                return redirect('products:movements', pk=product.pk)
-    else:
-        form = MovementForm()
-    return render(request, 'stock_out.html', {'product': product, 'form': form})
+def product_edit(request, pk):
+    obj = get_object_or_404(Product, pk=pk)
+    form = ProductForm(request.POST or None, request.FILES or None, instance=obj)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, _("Product updated."))
+        return redirect("products:detail", pk=obj.pk)
+    return render(request, "products/form.html", {"form": form, "title": _("Edit Product")})
+
+
+@login_required
+def product_delete(request, pk):
+    if not _can_delete_products(request.user):
+        messages.error(request, _("You don't have permission to delete products."))
+        return redirect("products:detail", pk=pk)
+
+    obj = get_object_or_404(Product, pk=pk)
+    if request.method == "POST":
+        obj.delete()
+        messages.success(request, _("Product deleted."))
+        return redirect("products:list")
+
+    return render(request, "products/confirm_delete.html", {"obj": obj, "object": obj})
+
+
+@login_required
+def product_adjust_stock(request, pk):
+    obj = get_object_or_404(Product, pk=pk)
+    form = StockAdjustForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        kind = form.cleaned_data["kind"]       
+        qty = form.cleaned_data["quantity"]
+        unit_price = form.cleaned_data.get("unit_price") or 0
+        note = form.cleaned_data.get("note", "")
+
+        if kind == "IN":
+            obj.quantity += qty
+            obj.save(update_fields=["quantity"])
+            StockMovement.objects.create(
+                product=obj, kind="IN", quantity=qty, unit_price=unit_price,
+                note=note, created_by=request.user
+            )
+            messages.success(request, _("Stock increased by %(q)s.") % {"q": qty})
+
+        elif kind == "OUT":
+            if qty > obj.quantity:
+                messages.error(request, _("Cannot issue more than current stock."))
+                return render(
+                    request, "products/adjust.html",
+                    {"form": form, "product": obj, "obj": obj, "object": obj}
+                )
+            obj.quantity -= qty
+            obj.save(update_fields=["quantity"])
+            StockMovement.objects.create(
+                product=obj, kind="OUT", quantity=qty, unit_price=unit_price,
+                note=note, created_by=request.user
+            )
+            messages.success(request, _("Stock reduced by %(q)s.") % {"q": qty})
+
+        else: 
+            obj.quantity = qty
+            obj.save(update_fields=["quantity"])
+            StockMovement.objects.create(
+                product=obj, kind="ADJ", quantity=qty, unit_price=0,
+                note=note or "Adjusted to count", created_by=request.user
+            )
+            messages.success(request, _("Stock adjusted to %(q)s.") % {"q": qty})
+
+        return redirect("products:detail", pk=obj.pk)
+
+    return render(
+        request, "products/adjust.html",
+        {"form": form, "product": obj, "obj": obj, "object": obj}
+    )

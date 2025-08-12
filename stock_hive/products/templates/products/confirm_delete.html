@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Delete product" %} — Stock Hive{% endblock %}
+{% block content %}
+<div class="container" style="max-width:720px;">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="mb-3">{% trans "Delete product" %}</h5>
+      <p class="text-danger">{% blocktrans with n=obj.name %}Are you sure you want to delete “{{ n }}”?{% endblocktrans %}</p>
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-danger" type="submit">{% trans "Yes, delete" %}</button>
+        <a class="btn btn-light" href="{% url 'products:detail' obj.pk %}">{% trans "Cancel" %}</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

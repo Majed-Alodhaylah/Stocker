@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="alert alert-warning">{% trans "Are you sure to delete" %} “{{ object.name }}”?</div>
+  <form method="post">{% csrf_token %}
+    <button class="btn btn-danger">{% trans "Delete" %}</button>
+    <a class="btn btn-light" href="{% url 'suppliers:detail' object.pk %}">{% trans "Cancel" %}</a>
+  </form>
+</div>
+{% endblock %}

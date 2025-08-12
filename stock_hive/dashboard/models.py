@@ -1,4 +1,5 @@
 from django.db import models
+from products.models import Product
 
 class Product(models.Model):
     UNIT_CHOICES = [

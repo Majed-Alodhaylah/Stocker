@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}<h4 class="mb-0">{{ title }}</h4>{% endblock %}
+{% block content %}
+<div class="card shadow-sm p-3">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary">{% trans "Save" %}</button>
+      <a class="btn btn-light" href="{% url 'categories:list' %}">{% trans "Back" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

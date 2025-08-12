@@ -1,93 +1,123 @@
-{% load static %}
-{% load i18n %}
+{% load static i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>{% block title %}Stock Hive{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    :root{--brand:#1e66ff;--ink:#0f172a;--muted:#64748b;}
-    body{background:#f9f9f9;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--ink);}
-    .sidebar{height:100vh;background:#fff;box-shadow:2px 0 5px rgba(0,0,0,.06);width:250px;}
-    .sidebar .nav-link{color:#334155;font-weight:500;border-radius:10px;}
-    .sidebar .nav-link.active{background:#f1f5f9;color:var(--brand);border-left:4px solid var(--brand);}
-    .main-content{margin-left:250px;width:calc(100% - 250px);}
-    .brand-icon{color:var(--brand);}
-    .no-sidebar .sidebar{display:none!important;}
-    .no-sidebar .main-content{margin-left:0;width:100%;}
-    .avatar-circle{width:28px;height:28px;border-radius:50%;background:#e2e8f0;display:inline-flex;align-items:center;justify-content:center;}
+    :root{--brand:#1e66ff;--navH:64px}
+    body{background:#f9f9f9;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#0f172a}
+    .sidebar{height:100vh;background:#fff;box-shadow:2px 0 5px rgba(0,0,0,.06);width:250px}
+    .sidebar .nav-link{color:#334155;font-weight:500;border-radius:10px}
+    html[dir="ltr"] .sidebar .nav-link.active{background:#f1f5f9;color:var(--brand);border-left:4px solid var(--brand)}
+    html[dir="rtl"] .sidebar .nav-link.active{background:#f1f5f9;color:var(--brand);border-right:4px solid var(--brand)}
+    html[dir="ltr"] .main-content{margin-left:250px;width:calc(100% - 250px);min-height:100vh;display:flex;flex-direction:column}
+    html[dir="rtl"] .main-content{margin-right:250px;width:calc(100% - 250px);min-height:100vh;display:flex;flex-direction:column}
+    .no-sidebar .sidebar{display:none!important}
+    .no-sidebar .main-content{margin:0;width:100%}
+    .navbar{position:sticky;top:0;z-index:1030;height:var(--navH);min-height:var(--navH);display:flex;align-items:center;padding-top:0!important;padding-bottom:0!important}
+    .navbar .navbar-brand{display:flex;align-items:center;gap:.5rem}
+    .brand-icon{color:var(--brand)!important;display:inline-block!important}
+    .auth-page .site-footer{display:none!important}
+    .auth-page .page-title-holder{display:none!important}
+    .auth-page .main-content{margin:0!important;width:100%!important;min-height:100vh;display:flex;flex-direction:column}
+    .auth-page main{flex:1;display:flex;padding:0!important}
+    .auth-wrap{flex:1;display:flex!important;align-items:center!important;justify-content:center!important}
+    .auth-card{max-width:520px;width:100%;border-radius:16px;margin:0 1rem}
+    .auth-form .field{margin-bottom:1rem}
+    .auth-form label{font-weight:600;margin-bottom:.35rem;display:inline-block}
+    .auth-form input[type="text"],.auth-form input[type="password"],.auth-form input[type="email"]{height:44px;border-radius:12px;border:1px solid #ced4da;padding:.5rem .75rem;width:100%}
+    .auth-form input:focus{outline:0;box-shadow:0 0 0 .25rem rgba(30,102,255,.15);border-color:#86b7fe}
+    .auth-form .btn-primary{height:44px;border-radius:12px}
+    .auth-form .errorlist{margin:.25rem 0 0;list-style:none;color:#dc3545;padding-left:0}
+    .auth-form .helptext,.auth-form ul.helptext,.auth-form .form-text,.auth-form small,.auth-form ul[id$="_helptext"]{display:none!important}
+    .role-inline{display:flex;gap:1.25rem;flex-wrap:wrap;margin:.5rem 0 1.25rem}
+    .role-inline .form-check{margin:0;display:inline-flex;align-items:center;gap:.45rem}
+    .role-inline .form-check-input{margin:0;accent-color:var(--brand)}
+    #admin-code-wrapper{margin-top:.25rem}
+    footer.site-footer{margin-top:auto;background:#fff}
+    .footer-nav a{color:#334155;text-decoration:none}
+    .footer-nav a:hover{color:var(--brand);text-decoration:underline}
+    @media (max-width:992px){
+      html[dir="ltr"] .main-content,html[dir="rtl"] .main-content{margin:0;width:100%}
+      .sidebar{display:none}
+    }
+    @media (max-width:576px){:root{--navH:56px}}
   </style>
 </head>
 
-<body class="{% if not request.user.is_authenticated %}no-sidebar{% elif request.resolver_match and request.resolver_match.url_name == 'home' %}no-sidebar{% endif %}">
-
+{% with rm=request.resolver_match %}
+<body class="{% if not request.user.is_authenticated %}no-sidebar {% endif %}{% if rm and rm.url_name == 'home' %}no-sidebar {% endif %}{% if rm and rm.app_name == 'accounts' %}auth-page{% endif %}">
   <div class="d-flex" style="min-height:100vh;">
 
-    <div class="sidebar position-fixed top-0 bottom-0 start-0 p-3">
+    <div class="sidebar position-fixed top-0 bottom-0 {% if LANGUAGE_CODE == 'ar' %}end-0{% else %}start-0{% endif %} p-3">
       <a href="{% url 'home' %}" class="d-flex align-items-center mb-3 text-decoration-none">
-        <i class="bi bi-box-seam fs-4 me-2 brand-icon"></i>
-        <span class="fs-5 fw-bold">Stock Hive</span>
+        <svg class="brand-icon" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+          <path d="M8 20 32 8l24 12v24L32 56 8 44V20Z" stroke="url(#g)" stroke-width="3" fill="none"/>
+          <path d="M8 20l24 12v24M56 20 32 32" stroke="url(#g)" stroke-width="3" fill="none"/>
+        </svg>
+        <span class="fs-5 fw-bold ms-2">Stock Hive</span>
       </a>
       <hr>
-      {% with rm=request.resolver_match %}
       <ul class="nav nav-pills flex-column mb-auto">
         <li class="nav-item">
-          <a href="{% url 'dashboard:index' %}"
-             class="nav-link {% if rm and rm.app_name == 'dashboard' and rm.url_name == 'index' %}active{% endif %}">
-            <i class="bi bi-speedometer2 me-2"></i>
+          <a href="{% url 'dashboard:index' %}" class="nav-link {% if rm and rm.app_name == 'dashboard' and rm.url_name == 'index' %}active{% endif %}">
+            <i class="bi bi-speedometer2 {% if LANGUAGE_CODE == 'ar' %}ms-2{% else %}me-2{% endif %}"></i>
             {% if LANGUAGE_CODE == 'ar' %}نظرة عامة{% else %}Overview{% endif %}
           </a>
         </li>
         <li class="nav-item">
-          <a href="{% url 'products:list' %}"
-             class="nav-link {% if rm and rm.app_name == 'products' %}active{% endif %}">
-            <i class="bi bi-box-seam me-2"></i>
+          <a href="{% url 'products:list' %}" class="nav-link {% if rm and rm.app_name == 'products' and rm.url_name == 'list' %}active{% endif %}">
+            <i class="bi bi-box-seam {% if LANGUAGE_CODE == 'ar' %}ms-2{% else %}me-2{% endif %}"></i>
             {% if LANGUAGE_CODE == 'ar' %}المنتجات{% else %}Products{% endif %}
           </a>
         </li>
         <li class="nav-item">
-          <a href="{% url 'dashboard:reports' %}"
-             class="nav-link {% if rm and rm.app_name == 'dashboard' and rm.url_name == 'reports' %}active{% endif %}">
-            <i class="bi bi-bar-chart me-2"></i>
+          <a href="{% url 'suppliers:list' %}" class="nav-link {% if rm and rm.app_name == 'suppliers' %}active{% endif %}">
+            <i class="bi bi-people {% if LANGUAGE_CODE == 'ar' %}ms-2{% else %}me-2{% endif %}"></i>
+            {% if LANGUAGE_CODE == 'ar' %}الموردون{% else %}Suppliers{% endif %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'categories:list' %}" class="nav-link {% if rm and rm.app_name == 'categories' %}active{% endif %}">
+            <i class="bi bi-tags {% if LANGUAGE_CODE == 'ar' %}ms-2{% else %}me-2{% endif %}"></i>
+            {% if LANGUAGE_CODE == 'ar' %}الفئات{% else %}Categories{% endif %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'dashboard:reports' %}" class="nav-link {% if rm and rm.app_name == 'dashboard' and rm.url_name == 'reports' %}active{% endif %}">
+            <i class="bi bi-bar-chart {% if LANGUAGE_CODE == 'ar' %}ms-2{% else %}me-2{% endif %}"></i>
             {% if LANGUAGE_CODE == 'ar' %}التقارير{% else %}Reports{% endif %}
           </a>
         </li>
         <li class="nav-item">
-          <a href="{% url 'dashboard:settings' %}"
-             class="nav-link {% if rm and rm.app_name == 'dashboard' and rm.url_name == 'settings' %}active{% endif %}">
-            <i class="bi bi-gear me-2"></i>
+          <a href="{% url 'dashboard:settings' %}" class="nav-link {% if rm and rm.app_name == 'dashboard' and rm.url_name == 'settings' %}active{% endif %}">
+            <i class="bi bi-gear {% if LANGUAGE_CODE == 'ar' %}ms-2{% else %}me-2{% endif %}"></i>
             {% if LANGUAGE_CODE == 'ar' %}الإعدادات{% else %}Settings{% endif %}
           </a>
         </li>
       </ul>
-      {% endwith %}
     </div>
 
     <div class="main-content">
-      <nav class="navbar navbar-light bg-light shadow-sm px-4 d-flex">
-        {% with rm=request.resolver_match %}
-          {% if not request.user.is_authenticated %}
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-              <i class="bi bi-box-seam fs-4 me-2 brand-icon"></i>
-              <span class="fw-bold">Stock Hive</span>
-            </a>
-          {% elif rm and rm.url_name == 'home' %}
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-              <i class="bi bi-box-seam fs-4 me-2 brand-icon"></i>
-              <span class="fw-bold">Stock Hive</span>
-            </a>
-          {% else %}
-            <span class="navbar-brand"></span>
-          {% endif %}
-        {% endwith %}
+      <nav class="navbar navbar-light bg-light shadow-sm px-4 d-flex align-items-center">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+          <svg class="brand-icon" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true" style="margin-inline-end:.5rem">
+            <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+            <path d="M8 20 32 8l24 12v24L32 56 8 44V20Z" stroke="url(#g2)" stroke-width="3" fill="none"/>
+            <path d="M8 20l24 12v24M56 20 32 32" stroke="url(#g2)" stroke-width="3" fill="none"/>
+          </svg>
+          <span class="fw-bold">Stock Hive</span>
+        </a>
 
-        <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="ms-auto d-flex align-items-center gap-3">
           <form action="{% url 'set_language' %}" method="post" class="d-flex">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.path }}">
@@ -98,46 +128,166 @@
           </form>
 
           {% if request.user.is_authenticated %}
-            <div class="dropdown">
-              <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="avatar-circle me-2"><i class="bi bi-person"></i></span>
-                <span class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</span>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a class="dropdown-item" href="{% url 'dashboard:index' %}">
-                    <i class="bi bi-speedometer2 me-2"></i>
-                    {% if LANGUAGE_CODE == 'ar' %}لوحة التحكم{% else %}Go to Dashboard{% endif %}
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li class="px-3 pb-2">
-                  <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
-                      <i class="bi bi-box-arrow-right me-1"></i>
-                      {% if LANGUAGE_CODE == 'ar' %}خروج{% else %}Logout{% endif %}
-                    </button>
-                  </form>
-                </li>
-              </ul>
-            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#confirmLogout">
+              <i class="bi bi-box-arrow-right {% if LANGUAGE_CODE == 'ar' %}ms-1{% else %}me-1{% endif %}"></i>
+              {% if LANGUAGE_CODE == 'ar' %}خروج{% else %}Logout{% endif %}
+            </button>
           {% else %}
-            <a class="btn btn-primary btn-sm" href="{% url 'accounts:login' %}">
-              {% if LANGUAGE_CODE == 'ar' %}تسجيل الدخول{% else %}Login{% endif %}
-            </a>
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'accounts:register' %}">
-              {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب{% else %}Create Account{% endif %}
-            </a>
+            <a class="btn btn-link p-0" href="{% url 'accounts:login' %}">{% if LANGUAGE_CODE == 'ar' %}تسجيل الدخول{% else %}Login{% endif %}</a>
+            <a class="btn btn-primary btn-sm" href="{% url 'accounts:register' %}">{% if LANGUAGE_CODE == 'ar' %}إنشاء حساب{% else %}Create Account{% endif %}</a>
           {% endif %}
         </div>
       </nav>
 
-      <div class="px-4 pt-3">{% block page_title %}{% endblock %}</div>
-      <main class="p-4">{% block content %}{% endblock %}</main>
+      {% if messages %}
+      <div class="container mt-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-2" role="alert">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="px-4 pt-3 page-title-holder">{% block page_title %}{% endblock %}</div>
+
+      <main class="p-4">
+        {% block content %}{% endblock %}
+
+        {% if rm and rm.app_name == 'accounts' and rm.url_name == 'login' %}
+          <div class="container auth-wrap d-flex align-items-center justify-content-center">
+            <div class="auth-card card p-4 shadow-sm w-100" style="max-width:520px">
+              <h3 class="auth-title mb-3 text-center">{% if LANGUAGE_CODE == 'ar' %}تسجيل الدخول{% else %}Login{% endif %}</h3>
+              {% if form.errors %}
+                <div class="alert alert-danger small mb-3">
+                  {% if LANGUAGE_CODE == 'ar' %}بيانات الدخول غير صحيحة{% else %}Invalid credentials{% endif %}
+                </div>
+              {% endif %}
+              <form method="post" class="auth-form" novalidate>
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="btn btn-primary w-100 mt-2" type="submit">{% if LANGUAGE_CODE == 'ar' %}دخول{% else %}Sign in{% endif %}</button>
+              </form>
+              <p class="mt-3 text-center small">
+                {% if LANGUAGE_CODE == 'ar' %}ليس لديك حساب؟{% else %}No account?{% endif %}
+                <a href="{% url 'accounts:register' %}">{% if LANGUAGE_CODE == 'ar' %}إنشاء حساب{% else %}Create one{% endif %}</a>
+              </p>
+            </div>
+          </div>
+
+        {% elif show_register or rm and rm.app_name == 'accounts' and rm.url_name == 'register' %}
+          <div class="container auth-wrap d-flex align-items-center justify-content-center">
+            <div class="auth-card card p-4 shadow-sm w-100" style="max-width:520px">
+              <h3 class="auth-title mb-3 text-center">{% if LANGUAGE_CODE == 'ar' %}إنشاء حساب{% else %}Create Account{% endif %}</h3>
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger small mb-3">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              <form method="post" class="auth-form" novalidate>
+                {% csrf_token %}
+
+                {% for field in form %}
+                  {% if field.name != 'role' and field.name != 'admin_code' %}
+                    <div class="field">
+                      {{ field.label_tag }}{{ field }}
+                      {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+
+                <div class="field">
+                  <label class="form-label">{% if LANGUAGE_CODE == 'ar' %}الدور{% else %}Role{% endif %}:</label>
+                  <div class="role-inline">
+                    {% for radio in form.role %}
+                      <div class="form-check form-check-inline">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% if form.role.errors %}<div class="text-danger small">{{ form.role.errors }}</div>{% endif %}
+                </div>
+
+                <div class="field" id="admin-code-wrapper" style="display:none">
+                  <label class="form-label" for="{{ form.admin_code.id_for_label }}">
+                    {% if LANGUAGE_CODE == 'ar' %}رمز المدير{% else %}Admin Code{% endif %}:
+                  </label>
+                  {{ form.admin_code }}
+                  {% if form.admin_code.errors %}<div class="text-danger small">{{ form.admin_code.errors }}</div>{% endif %}
+                </div>
+
+                <button class="btn btn-primary w-100 mt-2" type="submit">
+                  {% if LANGUAGE_CODE == 'ar' %}تسجيل{% else %}Register{% endif %}
+                </button>
+              </form>
+
+              <p class="mt-3 text-center small">
+                <a href="{% url 'accounts:login' %}">{% if LANGUAGE_CODE == 'ar' %}لدي حساب مسبقًا{% else %}Already have an account?{% endif %}</a>
+              </p>
+            </div>
+          </div>
+        {% endif %}
+      </main>
+
+      <footer class="site-footer bg-white border-top">
+        <div class="container py-4">
+          <div class="d-flex flex-wrap align-items-center w-100 gap-3">
+            <div class="d-flex align-items-center">
+              <svg class="brand-icon" width="20" height="20" viewBox="0 0 64 64" fill="none" aria-hidden="true" style="margin-inline-end:.4rem">
+                <defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+                <path d="M8 20 32 8l24 12v24L32 56 8 44V20Z" stroke="url(#g3)" stroke-width="3" fill="none"/>
+                <path d="M8 20l24 12v24M56 20 32 32" stroke="url(#g3)" stroke-width="3" fill="none"/>
+              </svg>
+              <strong>Stock Hive</strong>
+            </div>
+            <div class="ms-auto d-flex gap-3 small footer-nav">
+              <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Status</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal fade" id="confirmLogout" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{% if LANGUAGE_CODE == 'ar' %}تأكيد الخروج{% else %}Confirm Logout{% endif %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% if LANGUAGE_CODE == 'ar' %}إغلاق{% else %}Close{% endif %}"></button>
+        </div>
+        <div class="modal-body">
+          {% if LANGUAGE_CODE == 'ar' %}هل تريد تسجيل الخروج؟{% else %}Are you sure you want to log out?{% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            {% if LANGUAGE_CODE == 'ar' %}إلغاء{% else %}Cancel{% endif %}
+          </button>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">
+              {% if LANGUAGE_CODE == 'ar' %}تسجيل الخروج{% else %}Log out{% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const adminWrap = document.getElementById('admin-code-wrapper');
+      const roleRadios = document.querySelectorAll('input[name="role"]');
+
+      function updateAdminVisibility() {
+        const selected = document.querySelector('input[name="role"]:checked');
+        adminWrap.style.display = (selected && selected.value === 'admin') ? 'block' : 'none';
+      }
+
+      roleRadios.forEach(r => r.addEventListener('change', updateAdminVisibility));
+      updateAdminVisibility(); 
+    });
+  </script>
 </body>
 </html>
+{% endwith %}

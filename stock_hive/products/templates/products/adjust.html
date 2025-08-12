@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Adjust stock" %} — Stock Hive{% endblock %}
+{% block content %}
+<div class="container" style="max-width:720px;">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="mb-3">{% trans "Adjust stock for" %} “{{ obj.name|default:object.name }}”</h5>
+
+      <form method="post" class="auth-form" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" type="submit">{% trans "Save movement" %}</button>
+          <a class="btn btn-light" href="{% url 'products:detail' obj.pk|default:object.pk %}">{% trans "Back" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
